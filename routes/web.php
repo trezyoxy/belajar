@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\Api\BMKGController;
 use App\Http\Controllers\FileUploadController;
 
@@ -9,27 +9,31 @@ use App\Http\Controllers\FileUploadController;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
 */
 
-// Route default
+// Route default (halaman welcome)
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Routes untuk Task
+// ✅ Semua orang bisa melihat daftar task
 Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
-Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
-Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
-Route::get('/tasks/{id}', [TaskController::class, 'show'])->name('tasks.show');
-Route::get('/tasks/{id}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
-Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update');
-Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-Route::resource('tasks', TaskController::class);
-Route::get('/gempa', [BMKGController::class, 'getGempa']);
-Route::get('/upload', [FileUploadController::class, 'showForm'])->name('upload.form');
-Route::post('/upload', [FileUploadController::class, 'uploadFile'])->name('upload.file');
+
+// ✅ Proteksi semua fitur CRUD dengan middleware auth
+Route::middleware('auth')->group(function () {
+    Route::get('/tasks/create', [\App\Http\Controllers\TaskController::class, 'create'])->name('tasks.create');
+    Route::post('/tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('tasks.store');
+    Route::get('/tasks/{task}/edit', [\App\Http\Controllers\TaskController::class, 'edit'])->name('tasks.edit');
+    Route::put('/tasks/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('/tasks/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])->name('tasks.destroy');
+});
+
+// ✅ Rute API BMKG
+Route::get('/gempa', [\App\Http\Controllers\Api\BMKGController::class, 'getGempa']);
+
+// ✅ Upload file
+Route::get('/upload', [\App\Http\Controllers\FileUploadController::class, 'showForm'])->name('upload.form');
+Route::post('/upload', [\App\Http\Controllers\FileUploadController::class, 'uploadFile'])->name('upload.file');
+
+// ✅ Download file
+Route::get('/tasks/{task}/download', [\App\Http\Controllers\TaskController::class, 'download'])->middleware('auth')->name('tasks.download');

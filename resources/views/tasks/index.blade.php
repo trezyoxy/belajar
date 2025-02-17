@@ -35,10 +35,14 @@
                             <td class="align-middle">{{ $task->title }}</td>
                             <td class="align-middle">{{ $task->description }}</td>
                             <td class="align-middle">
-                                @if ($task->file_path)
-                                    <a href="{{ asset('storage/' . $task->file_path) }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                        View File
-                                    </a>
+                                @if ($task->file)
+                                    @if (auth()->id() === $task->user_id)
+                                        <a href="{{ route('tasks.download', $task->id) }}" class="btn btn-sm btn-primary">
+                                            Download File
+                                        </a>
+                                    @else
+                                        <span class="text-muted">No Access</span>
+                                    @endif
                                 @else
                                     <span class="text-muted">No File</span>
                                 @endif
@@ -54,7 +58,16 @@
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                 </form>
+                                <form method="GET" action="{{ route('tasks.index') }}" class="mb-3">
+                                    <input type="text" name="search" placeholder="Cari task..." class="form-control" value="{{ request('search') }}">
+                                    <button type="submit" class="btn btn-primary mt-2">Search</button>
+                                </form>
+                                <div class="d-flex justify-content-center">
+                                    {{ $tasks->links() }}
+                                </div>
                             </td>
+                            <th>Category</th>
+                            <td class="align-middle">{{ $task->category }}</td>
                         </tr>
 
                         <!-- Modal View Task -->
@@ -69,12 +82,12 @@
                                         <p><strong>Description:</strong> {{ $task->description }}</p>
 
                                         <!-- Menampilkan file yang di-upload -->
-                                        @if($task->file_path)
+                                        @if($task->file)
                                             <p><strong>Uploaded File:</strong></p>
-                                            @if (in_array(pathinfo($task->file_path, PATHINFO_EXTENSION), ['jpg', 'jpeg', 'png', 'gif']))
-                                                <img src="{{ asset('storage/' . $task->file_path) }}" class="img-fluid rounded shadow-sm">
+                                            @if (in_array(pathinfo($task->file, PATHINFO_EXTENSION), ['jpg', 'jpeg', 'png', 'gif']))
+                                                <img src="{{ asset('storage/' . $task->file) }}" class="img-fluid rounded shadow-sm">
                                             @else
-                                                <a href="{{ asset('storage/' . $task->file_path) }}" target="_blank" class="btn btn-primary">
+                                                <a href="{{ asset('storage/' . $task->file) }}" target="_blank" class="btn btn-primary">
                                                     Download File
                                                 </a>
                                             @endif

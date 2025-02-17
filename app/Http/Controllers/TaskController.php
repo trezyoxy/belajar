@@ -11,7 +11,7 @@ class TaskController extends Controller
     // Menampilkan semua tugas
     public function index()
     {
-        $tasks = Task::all(); // Ambil semua data dari tabel tasks
+        $tasks = Task::all();
         return view('tasks.index', compact('tasks'));
     }
 
@@ -20,80 +20,85 @@ class TaskController extends Controller
     {
         return view('tasks.create');
     }
-    
-    // Menyimpan tugas baru ke database
+
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'file' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,docx|max:2048',
+            'file' => 'nullable|file|mimes:jpg,png,pdf,docx|max:2048'
         ]);
 
-        $filePath = null;
+        // Simpan file jika ada
+        $fileName = null;
         if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('uploads', 'public');
+            $fileName = $request->file('file')->store('tasks', 'public');
         }
 
         Task::create([
             'title' => $request->title,
             'description' => $request->description,
-            'file_path' => $filePath, // Menyimpan path file ke database
+            'file' => $fileName,
+            'user_id' => auth()->id(),
         ]);
 
-        return redirect()->route('tasks.index')->with('success', 'Task berhasil ditambahkan!');
+        return redirect()->route('tasks.index')->with('message', 'Task berhasil ditambahkan!');
     }
 
-    
-
-    // Menampilkan satu tugas berdasarkan ID
-    public function show($id)
+    public function show(Task $task)
     {
-        $task = Task::findOrFail($id);
         return view('tasks.show', compact('task'));
     }
 
-    // Menampilkan form edit tugas
-    public function edit($id)
+    public function edit(Task $task)
     {
-        $task = Task::findOrFail($id);
         return view('tasks.edit', compact('task'));
     }
 
-    // Menyimpan perubahan tugas
-    public function update(Request $request, $id)
+    public function update(Request $request, Task $task)
     {
-        // Validasi input
         $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'required',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file' => 'nullable|file|mimes:jpg,png,pdf,docx|max:2048'
         ]);
 
-        // Update data di database
-        $task = Task::findOrFail($id);
+        // Simpan file baru jika ada
+        if ($request->hasFile('file')) {
+            // Hapus file lama
+            if ($task->file) {
+                Storage::disk('public')->delete($task->file);
+            }
+            $fileName = $request->file('file')->store('tasks', 'public');
+            $task->file = $fileName;
+        }
+
         $task->update([
             'title' => $request->title,
             'description' => $request->description,
+            'file' => $task->file,
         ]);
 
-        return redirect()->route('tasks.index')->with('success', 'Tugas berhasil diperbarui!');
+        return redirect()->route('tasks.index')->with('message', 'Task berhasil diperbarui!');
     }
 
-    // Menghapus tugas
-    public function destroy($id)
+    public function destroy(Task $task)
     {
-        $task = Task::findOrFail($id);
+        if ($task->file) {
+            Storage::disk('public')->delete($task->file);
+        }
+
         $task->delete();
 
-        return redirect()->route('tasks.index')->with('success', 'Tugas berhasil dihapus!');
-
+        return redirect()->route('tasks.index')->with('success', 'Task dan file berhasil dihapus!');
     }
 
-    
+    public function download(Task $task)
+    {
+        if (auth()->id() !== $task->user_id) {
+            abort(403, "You do not have permission to access this file.");
+        }
 
-    
-    
-   
-
-    
+        return response()->download(storage_path("app/public/" . $task->file));
+    }
 }
