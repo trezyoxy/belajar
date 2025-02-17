@@ -3,6 +3,7 @@
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BMKGController;
+use App\Http\Controllers\FileUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,3 +31,5 @@ Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update
 Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 Route::resource('tasks', TaskController::class);
 Route::get('/gempa', [BMKGController::class, 'getGempa']);
+Route::get('/upload', [FileUploadController::class, 'showForm'])->name('upload.form');
+Route::post('/upload', [FileUploadController::class, 'uploadFile'])->name('upload.file');

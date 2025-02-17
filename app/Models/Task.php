@@ -10,6 +10,7 @@ class Task extends Model
     use HasFactory;
 
     // Menentukan kolom yang bisa diisi secara massal
-    protected $fillable = ['title', 'description'];
+    protected $fillable = ['title', 'description', 'file_path'];
+
 }
 return redirect()->route('tasks.index')->with('success', 'Task berhasil ditambahkan!');

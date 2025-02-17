@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
 {
@@ -23,20 +24,26 @@ class TaskController extends Controller
     // Menyimpan tugas baru ke database
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'nullable|string', // Perbaikan, tidak perlu "required" dan "nullable" bersamaan
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,docx|max:2048',
         ]);
-    
-        // Simpan data ke database
+
+        $filePath = null;
+        if ($request->hasFile('file')) {
+            $filePath = $request->file('file')->store('uploads', 'public');
+        }
+
         Task::create([
             'title' => $request->title,
             'description' => $request->description,
+            'file_path' => $filePath, // Menyimpan path file ke database
         ]);
-    
-        return redirect()->route('tasks.index')->with('success', 'Tugas berhasil ditambahkan!');
+
+        return redirect()->route('tasks.index')->with('success', 'Task berhasil ditambahkan!');
     }
+
     
 
     // Menampilkan satu tugas berdasarkan ID
@@ -81,6 +88,8 @@ class TaskController extends Controller
         return redirect()->route('tasks.index')->with('success', 'Tugas berhasil dihapus!');
 
     }
+
+    
 
     
     
